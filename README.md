@@ -18,8 +18,6 @@ Table of Contents
 
 <h4>Aknowledgements</h4>
 **<a href ="http://people.seas.harvard.edu/~wkjeong/publication/wkjeong-sisc-fim.pdf">A Fast Iterative Method for Eikonal Equations</a>**<br/>
-<img src=""  align="right" hspace="20" width=450>
-*NOTE*<br/>
 
 **AUTHORS:**
 Won-Ki Jeong(*b*) <br/>
