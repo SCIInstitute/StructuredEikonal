@@ -1,4 +1,4 @@
-#GPUTUM: StructuredEikonal
+GPUTUM: StructuredEikonal
 =====================
 
 GPUTUM: StructuredEikonal is a C++/CUDA library written to solve the Eikonal equation on structured meshes. It uses the fast iterative method (FIM) to solve efficiently, and uses GPU hardware.
