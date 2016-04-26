@@ -14,6 +14,8 @@
 #include<vector>
 #include "common_def.h"
 #include "cuda_fim.cu"
+#include <fstream>
+#include <vector>
 
 void set_attribute_mask(CUDAMEMSTRUCT &_mem);
 void initialization(CUDAMEMSTRUCT &mem,int xdim, int ydim, int zdim);
@@ -25,6 +27,23 @@ int iterperblock, runmode,  solvertype;
 bool isCudaMemCreated;
 
 double* speedF;
+
+void writeNRRD(CUDAMEMSTRUCT & data, size_t xdim, size_t ydim, size_t zdim) {
+  std::fstream out("test.nrrd", std::ios::out | std::ios::binary);
+  out << "NRRD0001\n";
+  out << "# Complete NRRD file format specification at:\n";
+  out << "# http://teem.sourceforge.net/nrrd/format.html\n";
+  out << "type: double\n";
+  out << "dimension: 3\n";
+  out << "sizes: " << xdim << " " << ydim << " " << zdim << "\n";
+  out << "endian: little\n";
+  out << "encoding: raw\n\n";
+  for(int idx = 0; idx < xdim*ydim*zdim; idx++) {
+    double d = data.h_sol[idx];
+    out.write(reinterpret_cast<const char*>(&d),sizeof(double));
+  }
+  out.close();
+}
 
 void error(char* msg)
 {
@@ -43,8 +62,7 @@ void CheckCUDAMemory()
 }
 void map_generator(int type,int xdim,int ydim, int zdim);
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
   int map_type = 0;
   int xdim, ydim, zdim;
   xdim = ydim = zdim = 256;
@@ -76,6 +94,8 @@ int main(int argc, char** argv)
   runEikonalSolverSimple(cmem);
 
   get_solution(cmem);
+
+  writeNRRD(cmem,xdim,ydim,zdim);
 
   return 0;
 }
@@ -339,6 +359,36 @@ void get_solution(CUDAMEMSTRUCT &_mem)
 {
   // copy solution from GPU
   CUDA_SAFE_CALL( cudaMemcpy(_mem.h_sol, _mem.d_sol, _mem.volsize*sizeof(DOUBLE), cudaMemcpyDeviceToHost) );
+  //put the data where it belongs in the grand scheme of data!
+  std::vector<double> real_data(_mem.volsize, 0);
+  for(size_t blockID = 0; blockID < _mem.blknum; blockID++) {
+    size_t baseAddr = blockID * _mem.blksize;
+		size_t xgridlength = _mem.xdim/BLOCK_LENGTH;
+		size_t ygridlength = _mem.ydim/BLOCK_LENGTH;
+		// compute block index
+		size_t bx = blockID%xgridlength;
+		size_t tmpIdx = (blockID - bx)/xgridlength;
+		size_t by = tmpIdx%ygridlength;
+		size_t bz = (tmpIdx-by)/ygridlength;
+    //translate back to real space
+    for(int k = 0; k < BLOCK_LENGTH; k++) {
+      for(int j = 0; j < BLOCK_LENGTH; j++) {
+        for(int i = 0; i < BLOCK_LENGTH; i++) {
+          double d = _mem.h_sol[baseAddr + 
+            k * BLOCK_LENGTH * BLOCK_LENGTH + 
+            j * BLOCK_LENGTH + i];
+          size_t newIdx = (i + bx * BLOCK_LENGTH) * _mem.xdim * _mem.ydim + 
+            (j + by * BLOCK_LENGTH)  * _mem.xdim + k + bz * BLOCK_LENGTH;
+          if (newIdx < _mem.volsize) {
+            real_data[newIdx] = d;
+          }
+        }
+      }
+    }
+  }
+  for(size_t i = 0; i < _mem.volsize; i++) {
+    _mem.h_sol[i] = real_data[i];
+  }
 }
 
 void map_generator(int type,int xdim,int ydim, int zdim)
