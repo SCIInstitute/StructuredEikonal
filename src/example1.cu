@@ -17,15 +17,8 @@
 #include <fstream>
 #include <vector>
 
-void set_attribute_mask(CUDAMEMSTRUCT &_mem);
-void initialization(CUDAMEMSTRUCT &mem,int xdim, int ydim, int zdim);
-void init_cuda_mem(CUDAMEMSTRUCT &_mem, int xdim, int ydim, int zdim);
-void set_seed(CUDAMEMSTRUCT &_mem);
-void get_solution(CUDAMEMSTRUCT &_mem);
-
 int iterperblock, runmode,  solvertype;
 bool isCudaMemCreated;
-
 double* speedF;
 
 void writeNRRD(CUDAMEMSTRUCT & data, size_t xdim, size_t ydim, size_t zdim) {
@@ -59,68 +52,6 @@ void CheckCUDAMemory()
   std::cout << "Total Memory : " << totalMem/(1024*1024) << "MB" << std::endl;
   std::cout << "Free Memory  : " << freeMem/(1024*1024)  << "MB" << std::endl;
   std::cout << "--" << std::endl;
-}
-void map_generator(int type,int xdim,int ydim, int zdim);
-
-int main(int argc, char** argv) {
-  int map_type = 0;
-  int xdim, ydim, zdim;
-  xdim = ydim = zdim = 256;
-  iterperblock = 10;
-
-  int i = 1;
-  while (i < argc){
-    if (strcmp(argv[i],"--help") == 0)
-    {
-      printf("Usage : %s -s [SIZE] -m [MapOption] \n",argv[0]);
-      printf("MapType : 0 - Constant, 1 - sinusoid\n");
-      return 0;
-    }
-    if (strcmp(argv[i],"-m") == 0)
-      map_type = atoi(argv[i+1]);
-    if (strcmp(argv[i],"-s") == 0)
-      xdim = ydim = zdim = atoi(argv[i+1]);
-    i+=2;
-  }
-
-  map_generator(map_type,xdim,ydim,zdim);
-
-  CUDAMEMSTRUCT cmem;
-  isCudaMemCreated = false;
-
-  initialization(cmem,xdim,ydim,zdim);
-  set_seed(cmem);
-
-  runEikonalSolverSimple(cmem);
-
-  get_solution(cmem);
-
-  writeNRRD(cmem,xdim,ydim,zdim);
-
-  return 0;
-}
-
-void initialization(CUDAMEMSTRUCT &mem,int xdim, int ydim, int zdim)
-{
-  // get / set CUDA device
-  int deviceCount;
-  cudaGetDeviceCount(&deviceCount);
-
-  int device;
-  for(device = 0; device < deviceCount; ++device)
-  {
-    cudaDeviceProp deviceProp;
-    cudaGetDeviceProperties(&deviceProp, device);
-  }
-
-  CheckCUDAMemory();
-
-  init_cuda_mem(mem,xdim,ydim,zdim);
-
-  set_attribute_mask(mem);
-
-  CheckCUDAMemory();
-
 }
 
 void init_cuda_mem(CUDAMEMSTRUCT &_mem, int xdim, int ydim, int zdim)
@@ -255,6 +186,29 @@ void set_attribute_mask(CUDAMEMSTRUCT &_mem)
 
   delete[] h_spd;
   delete[] h_mask;
+}
+
+void initialization(CUDAMEMSTRUCT &mem,int xdim, int ydim, int zdim)
+{
+  // get / set CUDA device
+  int deviceCount;
+  cudaGetDeviceCount(&deviceCount);
+
+  int device;
+  for(device = 0; device < deviceCount; ++device)
+  {
+    cudaDeviceProp deviceProp;
+    cudaGetDeviceProperties(&deviceProp, device);
+  }
+
+  CheckCUDAMemory();
+
+  init_cuda_mem(mem,xdim,ydim,zdim);
+
+  set_attribute_mask(mem);
+
+  CheckCUDAMemory();
+
 }
 
 void set_seed(CUDAMEMSTRUCT &_mem)
@@ -417,4 +371,42 @@ void map_generator(int type,int xdim,int ydim, int zdim)
         }
     break;
   }
+}
+
+int main(int argc, char** argv) {
+  int map_type = 0;
+  int xdim, ydim, zdim;
+  xdim = ydim = zdim = 256;
+  iterperblock = 10;
+
+  int i = 1;
+  while (i < argc){
+    if (strcmp(argv[i],"--help") == 0)
+    {
+      printf("Usage : %s -s [SIZE] -m [MapOption] \n",argv[0]);
+      printf("MapType : 0 - Constant, 1 - sinusoid\n");
+      return 0;
+    }
+    if (strcmp(argv[i],"-m") == 0)
+      map_type = atoi(argv[i+1]);
+    if (strcmp(argv[i],"-s") == 0)
+      xdim = ydim = zdim = atoi(argv[i+1]);
+    i+=2;
+  }
+
+  map_generator(map_type,xdim,ydim,zdim);
+
+  CUDAMEMSTRUCT cmem;
+  isCudaMemCreated = false;
+
+  initialization(cmem,xdim,ydim,zdim);
+  set_seed(cmem);
+
+  runEikonalSolverSimple(cmem);
+
+  get_solution(cmem);
+
+  writeNRRD(cmem,xdim,ydim,zdim);
+
+  return 0;
 }
