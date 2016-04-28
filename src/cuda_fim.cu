@@ -29,11 +29,19 @@ using namespace std;
 
 //#define DEBUG
 
-// read-back active list volume
-//CUT_SAFE_CALL( cudaMemcpy(h_listVol, d_listVol, blockNum*sizeof(bool), cudaMemcpyDeviceToHost) );
-
 #define TIMER
 
+void CUT_SAFE_CALL(cudaError_t error) {
+	if(error != cudaSuccess)
+	{
+		printf("CUDA error! %d \n",error);
+		exit(EXIT_FAILURE);
+	}
+}
+
+void CUDA_SAFE_CALL(cudaError_t error) {
+	CUT_SAFE_CALL(error);
+}
 
 void runEikonalSolverSimple(CUDAMEMSTRUCT &cmem)
 {

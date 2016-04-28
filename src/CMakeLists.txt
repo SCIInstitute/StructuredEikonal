@@ -88,8 +88,12 @@ ENDIF()
 ###################
 # Core / Examples
 include_directories(${CMAKE_CURRENT_DIRECTORY})
-FILE(GLOB src cuda_fim.cu cuda_fim_kernels.cu)
-FILE(GLOB hdr common_def.h exception.h helper_timer.h)
+include_directories(${CMAKE_SOURCE_DIR})
+FILE(GLOB src cuda_fim.cu 
+     cuda_fim_kernel.cu 
+	 StructuredEikonal.cu
+	 helper_timer.c)
+FILE(GLOB hdr *.h)
 
 CUDA_ADD_LIBRARY(STRUCTURED_EIKONAL ${src} ${hdr})
 CUDA_ADD_EXECUTABLE(Example1 example1.cu)

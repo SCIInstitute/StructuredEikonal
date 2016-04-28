@@ -46,8 +46,7 @@
 typedef unsigned int uint;
 typedef unsigned char uchar;
 
-struct CUDA_MEM_STRUCTURE
-{
+struct CUDA_MEM_STRUCTURE {
   // volsize/blksize : # of pixel in volume/block
   // blknum : # of block
   // blklength : # of pixel in one dimemsion of block
@@ -73,19 +72,7 @@ struct CUDA_MEM_STRUCTURE
 
 typedef struct CUDA_MEM_STRUCTURE CUDAMEMSTRUCT;
 
-void CUT_SAFE_CALL(cudaError_t error)
-{
-	if(error != cudaSuccess)
-	{
-		printf("CUDA error! %d \n",error);
-//		assert(false);
-		exit(EXIT_FAILURE);
-	}
-}
-
-void CUDA_SAFE_CALL(cudaError_t error)
-{
-	CUT_SAFE_CALL(error);
-}
+void CUT_SAFE_CALL(cudaError_t error);
+void CUDA_SAFE_CALL(cudaError_t error);
 
 #endif
