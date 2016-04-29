@@ -6,7 +6,7 @@
 #include <string>
 #include <fstream>
 #include "common_def.h"
-#include "cuda_fim.cu"
+#include "cuda_fim.h"
 
 /** The class that represents all of the available options for StructuredEikonal */
 class StructuredEikonal {

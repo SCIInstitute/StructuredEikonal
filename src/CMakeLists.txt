@@ -92,14 +92,15 @@ include_directories(${CMAKE_SOURCE_DIR})
 FILE(GLOB src cuda_fim.cu 
      cuda_fim_kernel.cu 
 	 StructuredEikonal.cu
-	 helper_timer.c)
+	 helper_timer.cpp)
 FILE(GLOB hdr *.h)
 
 CUDA_ADD_LIBRARY(STRUCTURED_EIKONAL ${src} ${hdr})
-CUDA_ADD_EXECUTABLE(Example1 example1.cu)
-TARGET_LINK_LIBRARIES(Example1 STRUCTURED_EIKONAL)
-if (CMAKE_SYSTEM_NAME MATCHES "Linux")
-  TARGET_LINK_LIBRARIES(Example1 -ldl)
+if (BUILD_EXAMPLES)
+	CUDA_ADD_EXECUTABLE(Example1 example1.cu)
+	TARGET_LINK_LIBRARIES(Example1 STRUCTURED_EIKONAL)
+	if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+	  TARGET_LINK_LIBRARIES(Example1 -ldl)
+	endif()
 endif()
-
 

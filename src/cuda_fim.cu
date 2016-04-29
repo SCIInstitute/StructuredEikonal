@@ -6,30 +6,15 @@
 // 2016. 2. 4
 //
 
-// includes, system
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
+#include <cstdio>
+#include <string>
+#include <cmath>
 #include <float.h>
 #include <assert.h>
 #include <vector>
-
 #include <iostream>
-using namespace std;
-
-// includes, project
-//#include <cutil.h>
-
-// common header
-#include "common_def.h"
-
-// includes, kernels
-#include "cuda_fim_kernel.cu"
-
-//#define DEBUG
-
-#define TIMER
+#include "cuda_fim_kernel.h"
+#include "cuda_fim.h"
 
 void CUT_SAFE_CALL(cudaError_t error) {
 	if(error != cudaSuccess)
@@ -43,13 +28,15 @@ void CUDA_SAFE_CALL(cudaError_t error) {
 	CUT_SAFE_CALL(error);
 }
 
-void runEikonalSolverSimple(CUDAMEMSTRUCT &cmem)
+void runEikonalSolverSimple(CUDAMEMSTRUCT &cmem, bool verbose)
 {
   int deviceID;
   cudaGetDevice(&deviceID);
   cudaDeviceProp deviceProp;
   cudaGetDeviceProperties(&deviceProp, deviceID);
-  printf("Current device id : %d, name : %s\n", deviceID, deviceProp.name);
+  if (verbose) {
+    printf("Current device id : %d, name : %s\n", deviceID, deviceProp.name);
+  }
 
   int xdim, ydim, zdim;
   xdim = cmem.xdim;
@@ -68,8 +55,10 @@ void runEikonalSolverSimple(CUDAMEMSTRUCT &cmem)
 
   //int nBlkZ = zdim/BLOCK_LENGTH;
 
-  printf("# of total voxels : %d\n", volSize);
-  printf("# of total blocks : %d\n", blockNum);
+  if (verbose) {
+    printf("# of total voxels : %d\n", volSize);
+    printf("# of total blocks : %d\n", blockNum);
+  }
 
   // h_ : host memory, d_ : device memory
 
@@ -113,7 +102,7 @@ void runEikonalSolverSimple(CUDAMEMSTRUCT &cmem)
   int nTotalIter = 0;
   //uint sharedmemsize = sizeof(float)*BLOCK_LENGTH*BLOCK_LENGTH*(3*BLOCK_LENGTH + 2);
 
-  vector<int> sourceList;
+  std::vector<int> sourceList;
   sourceList.push_back((zdim/2)*ydim*xdim + (ydim/2)*xdim + (xdim/2));
 
   // initialize & start timer
@@ -146,9 +135,9 @@ void runEikonalSolverSimple(CUDAMEMSTRUCT &cmem)
     //
 
     //      printf("# of active tiles : %u\n", nActiveBlock);
-#ifdef DEBUG
-    printf("# of active tiles : %u\n", nActiveBlock);
-#endif
+    if (verbose) {
+      printf("# of active tiles : %u\n", nActiveBlock);
+    }
     //////////////////////////////////////////////////////////////////
     // 1. run solver on current active tiles
 
@@ -157,9 +146,9 @@ void runEikonalSolverSimple(CUDAMEMSTRUCT &cmem)
     dimGrid.y = (unsigned int)floor(((double)nActiveBlock-1)/65535)+1;
     dimGrid.x = (unsigned int)ceil ((double)nActiveBlock/(double)dimGrid.y);
 
-#ifdef DEBUG
-    printf("Grid size : %d x %d\n", dimGrid.x, dimGrid.y);
-#endif
+    if (verbose) {
+      printf("Grid size : %d x %d\n", dimGrid.x, dimGrid.y);
+    }
 
     CUT_SAFE_CALL( cudaMemcpy(d_list, h_list, nActiveBlock*sizeof(uint), cudaMemcpyHostToDevice) );
 
@@ -249,9 +238,9 @@ void runEikonalSolverSimple(CUDAMEMSTRUCT &cmem)
     dimGrid.y = (unsigned int)floor(((double)nActiveBlock-1)/65535)+1;
     dimGrid.x = (unsigned int)ceil((double)nActiveBlock/(double)dimGrid.y);
 
-#ifdef DEBUG
-    printf("Grid size : %d x %d\n", dimGrid.x, dimGrid.y);
-#endif
+    if (verbose) {
+      printf("Grid size : %d x %d\n", dimGrid.x, dimGrid.y);
+    }
 
     CUT_SAFE_CALL(cudaMemcpy(d_list, h_list, nActiveBlock*sizeof(uint), cudaMemcpyHostToDevice) );
     run_check_neighbor<<< dimGrid, dimBlock >>>(d_spd, d_mask, t_sol, d_sol, d_con, d_list, xdim, ydim, zdim, nOldActiveBlock, nActiveBlock);
@@ -304,22 +293,24 @@ void runEikonalSolverSimple(CUDAMEMSTRUCT &cmem)
 #endif
 
 
-#ifdef DEBUG
-    printf("Iteration : %d\n", nTotalIter);
-#endif
+    if (verbose) {
+      printf("Iteration : %d\n", nTotalIter);
+    }
   }
   sdkStopTimer(&timer_total);
 
-  printf("Eikonal solver converged after %d iterations\n", nTotalIter);
-  printf("Total Running Time: %f (sec)\n", sdkGetTimerValue(&timer_total)/1000);
-  printf("Time for solver : %f (sec)\n", sdkGetTimerValue(&timer_solver)/1000);
-  printf("Time for reduction : %f (sec)\n", sdkGetTimerValue(&timer_reduction)/1000);
+  if (verbose) {
+    printf("Eikonal solver converged after %d iterations\n", nTotalIter);
+    printf("Total Running Time: %f (sec)\n", sdkGetTimerValue(&timer_total) / 1000);
+    printf("Time for solver : %f (sec)\n", sdkGetTimerValue(&timer_solver) / 1000);
+    printf("Time for reduction : %f (sec)\n", sdkGetTimerValue(&timer_reduction) / 1000);
 #ifdef TIMER
-  printf("Time for list update-1 (CPU) : %f (sec)\n", sdkGetTimerValue(&timer_list)/1000);
-  printf("Time for list update-2 (CPU) : %f (sec)\n", sdkGetTimerValue(&timer_list2)/1000);
+    printf("Time for list update-1 (CPU) : %f (sec)\n", sdkGetTimerValue(&timer_list) / 1000);
+    printf("Time for list update-2 (CPU) : %f (sec)\n", sdkGetTimerValue(&timer_list2) / 1000);
 
 #endif
-  printf("Total # of blocks processed : %d\n", nTotalBlockProcessed);
+    printf("Total # of blocks processed : %d\n", nTotalBlockProcessed);
+  }
 
   sdkDeleteTimer(&timer_total);
   sdkDeleteTimer(&timer_solver);

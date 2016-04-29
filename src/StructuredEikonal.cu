@@ -28,6 +28,12 @@ void StructuredEikonal::writeNRRD(std::string filename) {
   out.close();
 }
 
+void StructuredEikonal::setDims(size_t x, size_t y, size_t z) {
+  this->width_ = x;
+  this->height_ = y;
+  this->depth_ = z;
+}
+
 void StructuredEikonal::error(char* msg) {
   printf("%s\n",msg);
   assert(false);
@@ -37,9 +43,11 @@ void StructuredEikonal::error(char* msg) {
 void StructuredEikonal::CheckCUDAMemory() {
   size_t freeMem, totalMem;
   cudaMemGetInfo(&freeMem, &totalMem);
-  std::cout << "Total Memory : " << totalMem/(1024*1024) << "MB" << std::endl;
-  std::cout << "Free Memory  : " << freeMem/(1024*1024)  << "MB" << std::endl;
-  std::cout << "--" << std::endl;
+  if (this->verbose_) {
+    std::cout << "Total Memory : " << totalMem / (1024 * 1024) << "MB" << std::endl;
+    std::cout << "Free Memory  : " << freeMem / (1024 * 1024) << "MB" << std::endl;
+    std::cout << "--" << std::endl;
+  }
 }
 
 void StructuredEikonal::init_cuda_mem() {
@@ -61,21 +69,21 @@ void StructuredEikonal::init_cuda_mem() {
     printf("%d %d %d \n",nx,ny,nz);
   }
 
-  uint volSize = nx*ny*nz;
-  uint blkSize = BLOCK_LENGTH*BLOCK_LENGTH*BLOCK_LENGTH;
+  auto volSize = nx*ny*nz;
+  auto blkSize = BLOCK_LENGTH*BLOCK_LENGTH*BLOCK_LENGTH;
 
-  int nBlkX = nx/BLOCK_LENGTH;
-  int nBlkY = ny/BLOCK_LENGTH;
-  int nBlkZ = nz/BLOCK_LENGTH;
-  uint blockNum = nBlkX*nBlkY*nBlkZ;
+  auto nBlkX = nx / BLOCK_LENGTH;
+  auto nBlkY = ny / BLOCK_LENGTH;
+  auto nBlkZ = nz / BLOCK_LENGTH;
+  auto blockNum = nBlkX*nBlkY*nBlkZ;
 
-  this->memoryStruct_.xdim = nx;
-  this->memoryStruct_.ydim = ny;
-  this->memoryStruct_.zdim = nz;
-  this->memoryStruct_.volsize = volSize;
-  this->memoryStruct_.blksize = blkSize;
+  this->memoryStruct_.xdim = static_cast<int>(nx);
+  this->memoryStruct_.ydim = static_cast<int>(ny);
+  this->memoryStruct_.zdim = static_cast<int>(nz);
+  this->memoryStruct_.volsize = static_cast<uint>(volSize);
+  this->memoryStruct_.blksize = static_cast<uint>(blkSize);
   this->memoryStruct_.blklength = BLOCK_LENGTH;
-  this->memoryStruct_.blknum = blockNum;
+  this->memoryStruct_.blknum = static_cast<uint>(blockNum);
   this->memoryStruct_.nIter = static_cast<int>(this->itersPerBlock_); // iter per block
 
   if(this->isCudaMemCreated_) // delete previous memory
@@ -309,7 +317,7 @@ void StructuredEikonal::solveEikonal() {
   this->isCudaMemCreated_ = false;
   this->initialization();
   this->useSeeds();
-  runEikonalSolverSimple(this->memoryStruct_);
+  runEikonalSolverSimple(this->memoryStruct_, this->verbose_);
   this->get_solution();
 }
 
