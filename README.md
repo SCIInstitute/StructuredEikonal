@@ -24,7 +24,7 @@ Table of Contents
 Won-Ki Jeong(*b*) <br/>
 Ross T. Whitaker(*a*) <br/>
 
-This library solves for the Eikional values on vertices located on a structured mesh.
+This library solves for the Eikional values for voxels within a volume.
 
 <br/><br/>
 Requirements
