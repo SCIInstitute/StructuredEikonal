@@ -114,7 +114,7 @@ library during build and includes the headers needed, which are usually no more 
 Then a program would setup the Eikonal parameters using the 
 <code>StructuredEikonal object</code> object and call 
 <code>object.solveEikonal()</code> to generate
-the array of vertex values per iteration.
+the array of voxel values that represent the solution.
 
 Here is a minimal usage example (in 3D).<br/>
 ```c++
