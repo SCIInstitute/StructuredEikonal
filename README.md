@@ -101,6 +101,10 @@ Each example has a <code>--help</code> flag that prints options for that example
 
 Follow the example source code in <code>src/example1.cu</code> to learn how to use the library.
 
+Depending on your device architecture, the default volume size may be too large. Make it smaller for 
+Example1 with the option <code>-s 128</code> or a smaller number if necessary. You can try this if you
+get a CUDA error when running the example.
+
 Using the Library
 ==============
 

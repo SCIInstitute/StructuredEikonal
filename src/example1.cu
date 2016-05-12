@@ -16,10 +16,13 @@ int main(int argc, char** argv) {
   std::string name = "test.nrrd";
   bool verbose = false;
   while (i < argc) {
-    if (strcmp(argv[i],"--help") == 0) {
-      std::cout << "Usage : " << argv[0] << "-s [SIZ(256)E] -m [MAP OPTION (0,1)]"
-        << "-i [ITER_PER_BLOCK(10)] -o [OUTPUT_NAME(test.nrrd)] -v [verbose?(false)]\n";
-      printf("MapType : 0 - Constant, 1 - sinusoid\n");
+    if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
+      std::cout << "Usage : " << argv[0] << " [Options]" << std::endl;
+      std::cout << "     -s SIZE              Volume size (cubed). [256]" << std::endl;
+      std::cout << "     -m TYPE              Initialize speeds (constant [0], egg carton [1])." << std::endl;
+      std::cout << "     -i ITER_PER_BLOCK    Number of iterations per block. [10]" << std::endl;
+      std::cout << "     -o OUTPUT_NAME       Name of the output file. [test.nrrd]" << std::endl;
+      std::cout << "     -v                   Verbose output." << std::endl;
       return 0;
     }
     if (strcmp(argv[i],"-m") == 0)
