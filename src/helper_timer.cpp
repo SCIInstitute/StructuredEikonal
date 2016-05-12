@@ -119,7 +119,7 @@ running(false), clock_sessions(0)
 { }
 
 // Destructor
-StopWatchLinux~StopWatchLinux() { }
+StopWatchLinux::~StopWatchLinux() { }
 
 // functions, d
 
